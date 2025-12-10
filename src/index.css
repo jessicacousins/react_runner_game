@@ -175,7 +175,98 @@ body {
   font-size: 0.8rem;
 }
 
-/* Responsive tweaks */
+/* Character picker row */
+.character-row {
+  margin-top: 10px;
+  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.character-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--text-dim);
+}
+
+.character-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.character-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(5, 7, 15, 0.85);
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: border-color 140ms ease-out, background 140ms ease-out,
+    box-shadow 160ms ease-out, transform 120ms ease-out;
+}
+
+.character-chip:hover {
+  border-color: rgba(255, 47, 208, 0.4);
+  box-shadow: 0 0 16px rgba(255, 47, 208, 0.45);
+  transform: translateY(-1px);
+}
+
+.character-chip.is-active {
+  border-color: var(--accent);
+  color: var(--text-main);
+  box-shadow: 0 0 24px rgba(255, 47, 208, 0.75);
+  background: radial-gradient(
+    circle at top left,
+    rgba(255, 47, 208, 0.32),
+    rgba(5, 7, 16, 0.96)
+  );
+}
+
+.character-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
+
+/* Per-character gradients */
+.character-swatch.neon-comet {
+  background: radial-gradient(circle, #ff2fd0 0%, #ff7ae0 40%, #ffffff 80%);
+}
+
+.character-swatch.star-tetra {
+  background: radial-gradient(circle, #5efff8 0%, #4be5ff 40%, #ffffff 80%);
+}
+
+.character-swatch.ghost-koi {
+  background: radial-gradient(circle, #ffe9b0 0%, #ffb37a 40%, #ffffff 80%);
+}
+
+.character-chip-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
+}
+
+.character-chip-name {
+  font-size: 0.78rem;
+}
+
+.character-chip-sub {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
 @media (max-width: 768px) {
   .app-root {
     padding: 16px 12px 20px;
@@ -189,5 +280,9 @@ body {
   .app-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .character-options {
+    gap: 6px;
   }
 }
