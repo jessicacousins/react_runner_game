@@ -69,11 +69,22 @@ export default function App() {
 
           <Game key={selectedCharacter} character={selectedCharacter} />
 
-          <footer className="shell-footer">
+          {/* <footer className="shell-footer">
             <p>
               <span className="kbd">Space</span> /{" "}
               <span className="kbd">↑</span> to swim up.{" "}
               <span className="kbd">↓</span> to glide down. Avoid glowing
+              jellyfish and sharks &mdash; colliding with one costs{" "}
+              <span className="accent">5 points</span>. Click{" "}
+              <span className="accent">Reset</span> to start fresh.
+            </p>
+          </footer> */}
+          <footer className="shell-footer">
+            <p>
+              <span className="kbd">Space</span> /{" "}
+              <span className="kbd">↑</span> to swim up.{" "}
+              <span className="kbd">↓</span> to glide down. On touch devices,
+              tap the top or bottom half of the game area to move. Avoid glowing
               jellyfish and sharks &mdash; colliding with one costs{" "}
               <span className="accent">5 points</span>. Click{" "}
               <span className="accent">Reset</span> to start fresh.
