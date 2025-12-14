@@ -1,13 +1,46 @@
-
 import React, { useEffect, useRef, useState } from "react";
 import "./Game.css";
 
 const GRAVITY = 420;
-const TOKEN_INTERVAL = 1.1;
-const BUBBLE_INTERVAL = 0.35;
-const HAZARD_INTERVAL = 2.8;
 
-export default function Game({ character = "neon-comet" }) {
+const BASE_TOKEN_INTERVAL = 1.1;
+const BASE_BUBBLE_INTERVAL = 0.35;
+const BASE_HAZARD_INTERVAL = 2.8;
+
+// difficulty multipliers
+function getDifficultyConfig(id) {
+  switch (id) {
+    case "calm":
+      return {
+        tokenInterval: BASE_TOKEN_INTERVAL * 1.1,
+        hazardInterval: BASE_HAZARD_INTERVAL * 1.35,
+        tokenSpeedFactor: 0.9,
+        hazardSpeedFactor: 0.85,
+      };
+    case "storm":
+      return {
+        tokenInterval: BASE_TOKEN_INTERVAL * 0.85,
+        hazardInterval: BASE_HAZARD_INTERVAL * 0.75,
+        tokenSpeedFactor: 1.15,
+        hazardSpeedFactor: 1.2,
+      };
+    case "current":
+    default:
+      return {
+        tokenInterval: BASE_TOKEN_INTERVAL,
+        hazardInterval: BASE_HAZARD_INTERVAL,
+        tokenSpeedFactor: 1,
+        hazardSpeedFactor: 1,
+      };
+  }
+}
+
+export default function Game({
+  character = "neon-comet",
+  difficulty = "current",
+  safeMode = false,
+  mission = "collect20",
+}) {
   const canvasRef = useRef(null);
   const gameStateRef = useRef({
     player: { x: 200, y: 225, radius: 26, vy: 0 },
@@ -18,30 +51,91 @@ export default function Game({ character = "neon-comet" }) {
     bubbleTimer: 0,
     hazardTimer: 0,
     hitFlash: 0,
+
+    streak: 0,
+    longestStreak: 0,
+    tokensCollected: 0,
+    hazardsHit: 0,
+    elapsed: 0,
+    comboLevel: 1,
+    missionCompleted: false,
+    milestoneStage: 0,
+    config: {
+      difficulty: "current",
+      safeMode: false,
+      character: "neon-comet",
+      mission: "collect20",
+      shieldAvailable: false,
+      hazardPenalty: 5,
+    },
   });
+
   const lastTimeRef = useRef(0);
   const animationFrameRef = useRef(null);
 
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
+  const [comboLevel, setComboLevel] = useState(1);
+  const [dailyActive, setDailyActive] = useState(false);
+  const dailyBonusRef = useRef(false);
+  const [sessionSummary, setSessionSummary] = useState(null);
+  const [missionCompletedLabel, setMissionCompletedLabel] = useState("");
+  const [milestoneMessage, setMilestoneMessage] = useState("");
+  const milestoneTimeoutRef = useRef(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("undersea_runner_bestScore");
+    const bestKey = safeMode
+      ? "undersea_runner_bestScore_safe"
+      : "undersea_runner_bestScore";
+
+    const stored = window.localStorage.getItem(bestKey);
     if (stored) {
       const parsed = Number(stored);
       if (!Number.isNaN(parsed)) {
         setBestScore(parsed);
       }
     }
-  }, []);
 
-  // update best score + localStorage
+    // Daily Tide bonus
+    const today = new Date().toISOString().slice(0, 10);
+    const last = window.localStorage.getItem("undersea_runner_dailyDate");
+    if (last !== today) {
+      dailyBonusRef.current = true;
+      setDailyActive(true);
+      window.localStorage.setItem("undersea_runner_dailyDate", today);
+    } else {
+      dailyBonusRef.current = false;
+      setDailyActive(false);
+    }
+
+    const completedRaw = window.localStorage.getItem(
+      "undersea_runner_completedMissions"
+    );
+    if (completedRaw) {
+      try {
+        const parsed = JSON.parse(completedRaw);
+        const completedList = Object.keys(parsed).filter((k) => parsed[k]);
+        if (completedList.length > 0) {
+          setMissionCompletedLabel(
+            "Missions: " + completedList.length + " done"
+          );
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, [safeMode]);
+
   useEffect(() => {
+    const bestKey = safeMode
+      ? "undersea_runner_bestScore_safe"
+      : "undersea_runner_bestScore";
+
     if (score > bestScore) {
       setBestScore(score);
-      localStorage.setItem("undersea_runner_bestScore", String(score));
+      window.localStorage.setItem(bestKey, String(score));
     }
-  }, [score, bestScore]);
+  }, [score, bestScore, safeMode]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -50,7 +144,22 @@ export default function Game({ character = "neon-comet" }) {
     const ctx = canvas.getContext("2d");
     const state = gameStateRef.current;
 
-    // reset runtime state
+    const diffCfg = getDifficultyConfig(difficulty);
+    const hazardPenalty = safeMode ? 0 : character === "ghost-koi" ? 3 : 5;
+
+    state.config = {
+      difficulty,
+      safeMode,
+      character,
+      mission,
+      shieldAvailable: character === "star-tetra",
+      hazardPenalty,
+      tokenInterval: diffCfg.tokenInterval,
+      hazardInterval: diffCfg.hazardInterval,
+      tokenSpeedFactor: diffCfg.tokenSpeedFactor,
+      hazardSpeedFactor: diffCfg.hazardSpeedFactor,
+    };
+
     state.player.x = canvas.width * 0.25;
     state.player.y = canvas.height * 0.5;
     state.player.vy = 0;
@@ -61,10 +170,26 @@ export default function Game({ character = "neon-comet" }) {
     state.bubbleTimer = 0;
     state.hazardTimer = 0;
     state.hitFlash = 0;
-    lastTimeRef.current = 0;
-    setScore(0);
+    state.streak = 0;
+    state.longestStreak = 0;
+    state.tokensCollected = 0;
+    state.hazardsHit = 0;
+    state.elapsed = 0;
+    state.comboLevel = 1;
+    state.missionCompleted = false;
+    state.milestoneStage = 0;
 
-    // keyboard controls (desktop)
+    lastTimeRef.current = 0;
+    setComboLevel(1);
+    setSessionSummary(null);
+    setMilestoneMessage("");
+
+    const initialScore = dailyBonusRef.current ? 5 : 0;
+    setScore(initialScore);
+
+    dailyBonusRef.current = false;
+
+    // keyboard controls
     const handleKeyDown = (e) => {
       if (e.code === "Space" || e.key === "ArrowUp") {
         e.preventDefault();
@@ -77,7 +202,6 @@ export default function Game({ character = "neon-comet" }) {
       }
     };
 
-    // shared helper for touch / pointer
     const applyVerticalInput = (clientY) => {
       const rect = canvas.getBoundingClientRect();
       const midY = rect.top + rect.height / 2;
@@ -90,16 +214,14 @@ export default function Game({ character = "neon-comet" }) {
     const handleTouchStart = (e) => {
       if (!canvas) return;
       if (e.touches.length === 0) return;
-      // prevent scrolling while interacting with the game
       e.preventDefault();
       const touch = e.touches[0];
       applyVerticalInput(touch.clientY);
     };
 
-    // pointer controls (stylus / touch with pointer events)
+    // controls
     const handlePointerDown = (e) => {
       if (!canvas) return;
-      // ignore desktop mouse clicks – this is mainly for touch / pen
       if (e.pointerType === "mouse") return;
       applyVerticalInput(e.clientY);
     };
@@ -115,7 +237,7 @@ export default function Game({ character = "neon-comet" }) {
       const delta = (time - lastTimeRef.current) / 1000;
       lastTimeRef.current = time;
 
-      updateGame(delta, canvas, gameStateRef, setScore);
+      updateGame(delta, canvas, gameStateRef, setScore, setComboLevel);
       drawGame(ctx, canvas, gameStateRef, character);
 
       animationFrameRef.current = requestAnimationFrame(loop);
@@ -129,14 +251,57 @@ export default function Game({ character = "neon-comet" }) {
       canvas.removeEventListener("pointerdown", handlePointerDown);
       cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [character]);
+  }, [character, difficulty, safeMode, mission]);
 
   const handleReset = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    setScore(0);
     const state = gameStateRef.current;
+
+    setSessionSummary({
+      tokens: state.tokensCollected,
+      longestStreak: state.longestStreak,
+      hazards: state.hazardsHit,
+      elapsed: Math.round(state.elapsed),
+    });
+
+    if (!state.missionCompleted) {
+      let completed = false;
+
+      if (mission === "collect20") {
+        completed = state.tokensCollected >= 20;
+      } else if (mission === "survive45") {
+        completed = state.elapsed >= 45;
+      } else if (mission === "noHazard") {
+        completed = state.elapsed >= 35 && state.hazardsHit === 0;
+      }
+
+      if (completed) {
+        state.missionCompleted = true;
+        setMissionCompletedLabel("Mission complete!");
+
+        const raw = window.localStorage.getItem(
+          "undersea_runner_completedMissions"
+        );
+        let obj = {};
+        if (raw) {
+          try {
+            obj = JSON.parse(raw);
+          } catch {
+            obj = {};
+          }
+        }
+        obj[mission] = true;
+        window.localStorage.setItem(
+          "undersea_runner_completedMissions",
+          JSON.stringify(obj)
+        );
+      }
+    }
+
+    // reset
+    setScore(0);
     state.tokens = [];
     state.bubbles = [];
     state.hazards = [];
@@ -144,9 +309,33 @@ export default function Game({ character = "neon-comet" }) {
     state.bubbleTimer = 0;
     state.hazardTimer = 0;
     state.hitFlash = 0;
+    state.streak = 0;
+    state.longestStreak = 0;
+    state.tokensCollected = 0;
+    state.hazardsHit = 0;
+    state.elapsed = 0;
+    state.comboLevel = 1;
+    state.milestoneStage = 0;
+    setComboLevel(1);
+    setMilestoneMessage("");
+    setDailyActive(false);
+
     state.player.y = canvas.height * 0.5;
     state.player.vy = 0;
   };
+
+  // show milestones briefly
+  const showMilestone = (text) => {
+    setMilestoneMessage(text);
+    if (milestoneTimeoutRef.current) {
+      clearTimeout(milestoneTimeoutRef.current);
+    }
+    milestoneTimeoutRef.current = setTimeout(() => {
+      setMilestoneMessage("");
+    }, 2200);
+  };
+
+  gameStateRef.current.showMilestone = showMilestone;
 
   return (
     <div className="game-shell">
@@ -157,17 +346,39 @@ export default function Game({ character = "neon-comet" }) {
             <span className="score-value">{score}</span>
           </div>
           <div className="score-box">
-            <span className="score-label">Best</span>
+            <span className="score-label">Best{safeMode ? " (Safe)" : ""}</span>
             <span className="score-value">{bestScore}</span>
           </div>
         </div>
 
-        <button className="reset-btn" onClick={handleReset}>
-          Reset
-        </button>
+        <div className="score-meta">
+          {dailyActive && (
+            <div className="info-pill daily-pill">Daily Tide +5</div>
+          )}
+          {comboLevel > 1 && (
+            <div className="info-pill combo-pill">Combo x{comboLevel}</div>
+          )}
+          {missionCompletedLabel && (
+            <div className="info-pill mission-pill">
+              {missionCompletedLabel}
+            </div>
+          )}
+          <button className="reset-btn" onClick={handleReset}>
+            Reset
+          </button>
+        </div>
       </div>
 
-      <div className="canvas-frame">
+      {sessionSummary && (
+        <div className="session-strip">
+          Run summary: <span>{sessionSummary.tokens} tokens</span>
+          <span>{sessionSummary.longestStreak} max streak</span>
+          <span>{sessionSummary.hazards} hazard hits</span>
+          <span>{sessionSummary.elapsed}s in water</span>
+        </div>
+      )}
+
+      <div className={"canvas-frame" + (comboLevel > 1 ? " combo-active" : "")}>
         <canvas
           ref={canvasRef}
           width={900}
@@ -175,20 +386,30 @@ export default function Game({ character = "neon-comet" }) {
           className="game-canvas"
         />
         <div className="canvas-hint">
-          Swim & collect tokens. Tap top / bottom on mobile.
+          <div>Swim & collect tokens. Tap top / bottom on mobile.</div>
+          <div className="canvas-mission-line">
+            Mission: {mission === "collect20" && "Collect 20 tokens"}
+            {mission === "survive45" && "Survive 45 seconds"}
+            {mission === "noHazard" && "Avoid all hazards this run"}
+          </div>
+          {milestoneMessage && (
+            <div className="canvas-milestone">{milestoneMessage}</div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function updateGame(delta, canvas, stateRef, setScore) {
+function updateGame(delta, canvas, stateRef, setScore, setComboLevel) {
   const state = stateRef.current;
-  const { player } = state;
+  const { player, config } = state;
 
   if (state.hitFlash > 0) {
     state.hitFlash = Math.max(0, state.hitFlash - delta);
   }
+
+  state.elapsed += delta;
 
   // fish physics
   player.vy += GRAVITY * delta;
@@ -206,9 +427,10 @@ function updateGame(delta, canvas, stateRef, setScore) {
     player.vy = 0;
   }
 
-  // tokens
+  // tokens spawn
   state.spawnTimer += delta;
-  if (state.spawnTimer >= TOKEN_INTERVAL) {
+  const tokenInterval = config.tokenInterval ?? BASE_TOKEN_INTERVAL;
+  if (state.spawnTimer >= tokenInterval) {
     state.spawnTimer = 0;
     const margin = 90;
     const tokenY =
@@ -217,13 +439,13 @@ function updateGame(delta, canvas, stateRef, setScore) {
       x: canvas.width + 40,
       y: tokenY,
       radius: 16,
-      speed: 210 + Math.random() * 60,
+      speed: (210 + Math.random() * 60) * (config.tokenSpeedFactor ?? 1),
     });
   }
 
-  // bubbles
+  // bubbles spawn
   state.bubbleTimer += delta;
-  if (state.bubbleTimer >= BUBBLE_INTERVAL) {
+  if (state.bubbleTimer >= BASE_BUBBLE_INTERVAL) {
     state.bubbleTimer = 0;
     state.bubbles.push({
       x: 40 + Math.random() * (canvas.width - 80),
@@ -234,9 +456,10 @@ function updateGame(delta, canvas, stateRef, setScore) {
     });
   }
 
-  // hazards (jellyfish / sharks)
+  // hazards spawn
   state.hazardTimer += delta;
-  if (state.hazardTimer >= HAZARD_INTERVAL) {
+  const hazardInterval = config.hazardInterval ?? BASE_HAZARD_INTERVAL;
+  if (state.hazardTimer >= hazardInterval) {
     state.hazardTimer = 0;
     const margin = 80;
     const hazardY =
@@ -248,7 +471,7 @@ function updateGame(delta, canvas, stateRef, setScore) {
       x: canvas.width + 80,
       y: hazardY,
       radius: baseRadius,
-      speed: 230 + Math.random() * 70,
+      speed: (230 + Math.random() * 70) * (config.hazardSpeedFactor ?? 1),
       type,
     });
   }
@@ -268,11 +491,61 @@ function updateGame(delta, canvas, stateRef, setScore) {
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < token.radius + player.radius - 4) {
       state.tokens.splice(i, 1);
-      setScore((prev) => prev + 1);
+
+      state.streak += 1;
+      state.tokensCollected += 1;
+      if (state.streak > state.longestStreak) {
+        state.longestStreak = state.streak;
+      }
+
+      // combo level by streak thresholds
+      let newCombo = 1;
+      if (state.streak >= 20) newCombo = 3;
+      else if (state.streak >= 10) newCombo = 3;
+      else if (state.streak >= 5) newCombo = 2;
+
+      if (newCombo !== state.comboLevel) {
+        state.comboLevel = newCombo;
+        setComboLevel(newCombo);
+      }
+
+      // base gain with combo multiplier
+      const multiplier = state.comboLevel;
+      let gain = 1 * multiplier;
+
+      // Neon Comet perk: +1 every time streak hits multiples of 5
+      if (config.character === "neon-comet" && state.streak % 5 === 0) {
+        gain += 1;
+      }
+
+      setScore((prev) => prev + gain);
+
+      // milestones
+      if (
+        state.tokensCollected >= 10 &&
+        state.milestoneStage < 1 &&
+        stateRef.current.showMilestone
+      ) {
+        state.milestoneStage = 1;
+        stateRef.current.showMilestone("10 tokens reached!");
+      } else if (
+        state.tokensCollected >= 30 &&
+        state.milestoneStage < 2 &&
+        stateRef.current.showMilestone
+      ) {
+        state.milestoneStage = 2;
+        stateRef.current.showMilestone("30 tokens – Deep Diver!");
+      } else if (
+        state.tokensCollected >= 60 &&
+        state.milestoneStage < 3 &&
+        stateRef.current.showMilestone
+      ) {
+        state.milestoneStage = 3;
+        stateRef.current.showMilestone("60 tokens – Abyss Runner!");
+      }
     }
   }
 
-  // move bubbles
   for (let i = state.bubbles.length - 1; i >= 0; i--) {
     const b = state.bubbles[i];
     b.y -= b.vy * delta;
@@ -295,10 +568,36 @@ function updateGame(delta, canvas, stateRef, setScore) {
     const dy = h.y - player.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < h.radius + player.radius - 6) {
-      // collision => minus 5 points, clamp at 0
       state.hazards.splice(i, 1);
       state.hitFlash = 0.35;
-      setScore((prev) => Math.max(0, prev - 5));
+      state.hazardsHit += 1;
+
+      // Safe Reef: visual only
+      if (config.safeMode) {
+        state.streak = 0;
+        state.comboLevel = 1;
+        setComboLevel(1);
+        continue;
+      }
+
+      // Star Tetra perk: first hit is shielded
+      if (config.character === "star-tetra" && config.shieldAvailable) {
+        config.shieldAvailable = false;
+        state.streak = 0;
+        state.comboLevel = 1;
+        setComboLevel(1);
+        continue;
+      }
+
+      // regular penalty (Ghost Koi - softer penalty from hazardPenalty)
+      const penalty = config.hazardPenalty ?? 5;
+      state.streak = 0;
+      state.comboLevel = 1;
+      setComboLevel(1);
+
+      if (penalty > 0) {
+        setScore((prev) => Math.max(0, prev - penalty));
+      }
     }
   }
 }
@@ -464,7 +763,7 @@ function drawGame(ctx, canvas, stateRef, character) {
 
       ctx.restore();
     } else {
-      // shark 
+      // shark
       ctx.save();
       ctx.translate(h.x, h.y);
       ctx.scale(-1, 1);
@@ -525,7 +824,7 @@ function drawGame(ctx, canvas, stateRef, character) {
   }
   ctx.restore();
 
-  // Player fish (variant per character)
+  // player fish
   ctx.save();
   ctx.translate(player.x, player.y);
 

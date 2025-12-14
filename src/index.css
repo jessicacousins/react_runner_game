@@ -175,7 +175,6 @@ body {
   font-size: 0.8rem;
 }
 
-/* Character picker row */
 .character-row {
   margin-top: 10px;
   margin-bottom: 6px;
@@ -238,7 +237,6 @@ body {
   flex-shrink: 0;
 }
 
-/* Per-character gradients */
 .character-swatch.neon-comet {
   background: radial-gradient(circle, #ff2fd0 0%, #ff7ae0 40%, #ffffff 80%);
 }
@@ -267,6 +265,161 @@ body {
   color: var(--text-dim);
 }
 
+/* difficulty row */
+.mode-row {
+  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mode-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--text-dim);
+}
+
+.mode-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mode-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(5, 7, 15, 0.85);
+  color: var(--text-soft);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: border-color 140ms ease-out, background 140ms ease-out,
+    box-shadow 160ms ease-out, transform 120ms ease-out;
+}
+
+.mode-chip:hover {
+  border-color: rgba(255, 47, 208, 0.4);
+  box-shadow: 0 0 12px rgba(255, 47, 208, 0.4);
+  transform: translateY(-1px);
+}
+
+.mode-chip.is-active {
+  border-color: var(--accent);
+  color: var(--text-main);
+  box-shadow: 0 0 20px rgba(255, 47, 208, 0.6);
+}
+
+.mode-chip-main {
+  font-size: 0.78rem;
+}
+
+.mode-chip-sub {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+
+/* missions mode */
+.mission-row {
+  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mission-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--text-dim);
+}
+
+.mission-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mission-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  background: rgba(5, 7, 15, 0.85);
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: border-color 140ms ease-out, background 140ms ease-out,
+    box-shadow 160ms ease-out, transform 120ms ease-out;
+}
+
+.mission-chip:hover {
+  border-color: rgba(163, 245, 255, 0.7);
+  box-shadow: 0 0 14px rgba(163, 245, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+.mission-chip.is-active {
+  border-color: rgba(163, 245, 255, 0.9);
+  color: var(--text-main);
+  box-shadow: 0 0 20px rgba(163, 245, 255, 0.7);
+}
+
+.mission-chip-main {
+  font-size: 0.75rem;
+}
+
+.mission-chip-sub {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+
+/* safe mode */
+.safe-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(163, 245, 255, 0.35);
+  background: rgba(4, 9, 16, 0.9);
+  color: rgba(189, 235, 255, 0.94);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: border-color 140ms ease-out, background 140ms ease-out,
+    box-shadow 160ms ease-out, transform 120ms ease-out;
+}
+
+.safe-toggle-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: radial-gradient(circle, #a3f5ff 0%, #4be5ff 50%, transparent 80%);
+  box-shadow: 0 0 12px rgba(163, 245, 255, 0.9);
+}
+
+.safe-toggle.is-active {
+  border-color: rgba(111, 255, 199, 0.9);
+  box-shadow: 0 0 20px rgba(111, 255, 199, 0.6);
+  background: radial-gradient(
+    circle at top left,
+    rgba(111, 255, 199, 0.16),
+    rgba(4, 9, 16, 0.96)
+  );
+}
+
+.safe-toggle.is-active .safe-toggle-dot {
+  background: radial-gradient(circle, #6fffc7 0%, #13db8e 50%, transparent 80%);
+  box-shadow: 0 0 16px rgba(111, 255, 199, 0.9);
+}
+
 @media (max-width: 768px) {
   .app-root {
     padding: 16px 12px 20px;
@@ -282,7 +435,14 @@ body {
     align-items: flex-start;
   }
 
-  .character-options {
+  .character-options,
+  .mode-options,
+  .mission-options {
     gap: 6px;
+  }
+
+  .shell-footer {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
