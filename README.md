@@ -2,7 +2,7 @@
 
 ## Description
 
-Vite React endless runner game with local storage persistence, designed for browsers and mobile devices. Players choose from three fish characters, then use the arrow keys to swim up and down through the underwater lane. Collecting glowing bubbles adds 1 point, colliding with jellyfish or sharks acts as a hazard and subtracts 5 points from the players current score
+Vite + React endless runner game with canvas-based gameplay and localStorage persistence, built for desktop and mobile browsers. Players choose one of three fish characters with distinct perks, select a tide difficulty, and optionally enable Safe Reef mode. Movement is controlled via arrow keys or tapping the top/bottom of the game area on touch devices. Glowing bubbles increase score with streak-based combo multipliers, while jellyfish and sharks apply character- and mode-dependent penalties. Per-run missions, a daily tide bonus, long-run milestones, and session summaries are tracked locally.
 
 ## Live at:
 
