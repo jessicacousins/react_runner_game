@@ -1,14 +1,14 @@
 # Runner Game - Vite React
 
-## Description
-
-Vite + React endless runner game with canvas-based gameplay and localStorage persistence, built for desktop and mobile browsers. Players choose one of three fish characters with distinct perks, select a tide difficulty, and optionally enable Safe Reef mode. Movement is controlled via arrow keys or tapping the top/bottom of the game area on touch devices. Glowing bubbles increase score with streak-based combo multipliers, while jellyfish and sharks apply character- and mode-dependent penalties. Per-run missions, a daily tide bonus, long-run milestones, and session summaries are tracked locally.
-
-## Live at:
+## Website Live at:
 
 ```
 https://underwatergame.netlify.app/
 ```
+
+## Description
+
+Vite + React endless runner game with canvas-based gameplay and localStorage persistence, built for desktop and mobile browsers. Players choose one of three fish characters with distinct perks, select a tide difficulty, and optionally enable Safe Reef mode. Movement is controlled via arrow keys or tapping the top/bottom of the game area on touch devices. Glowing bubbles increase score with streak-based combo multipliers, while jellyfish and sharks apply character- and mode-dependent penalties. Per-run missions, a daily tide bonus, long-run milestones, and session summaries are tracked locally.
 
 ## License & Attribution
 
