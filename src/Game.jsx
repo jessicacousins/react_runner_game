@@ -6,6 +6,7 @@ const GRAVITY = 420;
 const BASE_TOKEN_INTERVAL = 1.1;
 const BASE_BUBBLE_INTERVAL = 0.35;
 const BASE_HAZARD_INTERVAL = 2.8;
+const BASE_POWERUP_INTERVAL = 9.5;
 
 // difficulty multipliers
 function getDifficultyConfig(id) {
@@ -16,6 +17,7 @@ function getDifficultyConfig(id) {
         hazardInterval: BASE_HAZARD_INTERVAL * 1.35,
         tokenSpeedFactor: 0.9,
         hazardSpeedFactor: 0.85,
+        powerupIntervalFactor: 1.1,
       };
     case "storm":
       return {
@@ -23,6 +25,7 @@ function getDifficultyConfig(id) {
         hazardInterval: BASE_HAZARD_INTERVAL * 0.75,
         tokenSpeedFactor: 1.15,
         hazardSpeedFactor: 1.2,
+        powerupIntervalFactor: 0.9,
       };
     case "current":
     default:
@@ -31,6 +34,7 @@ function getDifficultyConfig(id) {
         hazardInterval: BASE_HAZARD_INTERVAL,
         tokenSpeedFactor: 1,
         hazardSpeedFactor: 1,
+        powerupIntervalFactor: 1,
       };
   }
 }
@@ -47,9 +51,11 @@ export default function Game({
     tokens: [],
     bubbles: [],
     hazards: [],
+    powerUps: [],
     spawnTimer: 0,
     bubbleTimer: 0,
     hazardTimer: 0,
+    powerUpTimer: 0,
     hitFlash: 0,
 
     streak: 0,
@@ -60,6 +66,12 @@ export default function Game({
     comboLevel: 1,
     missionCompleted: false,
     milestoneStage: 0,
+    activePowerUps: {
+      magnet: 0, // seconds remaining
+      shield: 0, // count of shielded hits
+      superComboHits: 0, // boosted token pickups remaining
+    },
+    powerupLabel: "",
     config: {
       difficulty: "current",
       safeMode: false,
@@ -67,6 +79,11 @@ export default function Game({
       mission: "collect20",
       shieldAvailable: false,
       hazardPenalty: 5,
+      tokenInterval: BASE_TOKEN_INTERVAL,
+      hazardInterval: BASE_HAZARD_INTERVAL,
+      tokenSpeedFactor: 1,
+      hazardSpeedFactor: 1,
+      powerupIntervalFactor: 1,
     },
   });
 
@@ -81,8 +98,10 @@ export default function Game({
   const [sessionSummary, setSessionSummary] = useState(null);
   const [missionCompletedLabel, setMissionCompletedLabel] = useState("");
   const [milestoneMessage, setMilestoneMessage] = useState("");
+  const [powerupLabel, setPowerupLabel] = useState("");
   const milestoneTimeoutRef = useRef(null);
 
+  // load best score, missions, and daily tide bonus on mount / safeMode change
   useEffect(() => {
     const bestKey = safeMode
       ? "undersea_runner_bestScore_safe"
@@ -126,6 +145,7 @@ export default function Game({
     }
   }, [safeMode]);
 
+  // update best score whenever score changes
   useEffect(() => {
     const bestKey = safeMode
       ? "undersea_runner_bestScore_safe"
@@ -158,18 +178,24 @@ export default function Game({
       hazardInterval: diffCfg.hazardInterval,
       tokenSpeedFactor: diffCfg.tokenSpeedFactor,
       hazardSpeedFactor: diffCfg.hazardSpeedFactor,
+      powerupIntervalFactor: diffCfg.powerupIntervalFactor,
     };
 
+    // reset transient state for new run / selection change
     state.player.x = canvas.width * 0.25;
     state.player.y = canvas.height * 0.5;
     state.player.vy = 0;
+
     state.tokens = [];
     state.bubbles = [];
     state.hazards = [];
+    state.powerUps = [];
     state.spawnTimer = 0;
     state.bubbleTimer = 0;
     state.hazardTimer = 0;
+    state.powerUpTimer = 0;
     state.hitFlash = 0;
+
     state.streak = 0;
     state.longestStreak = 0;
     state.tokensCollected = 0;
@@ -178,15 +204,21 @@ export default function Game({
     state.comboLevel = 1;
     state.missionCompleted = false;
     state.milestoneStage = 0;
+    state.activePowerUps = {
+      magnet: 0,
+      shield: 0,
+      superComboHits: 0,
+    };
+    state.powerupLabel = "";
 
     lastTimeRef.current = 0;
     setComboLevel(1);
     setSessionSummary(null);
     setMilestoneMessage("");
+    setPowerupLabel("");
 
     const initialScore = dailyBonusRef.current ? 5 : 0;
     setScore(initialScore);
-
     dailyBonusRef.current = false;
 
     // keyboard controls
@@ -219,7 +251,7 @@ export default function Game({
       applyVerticalInput(touch.clientY);
     };
 
-    // controls
+    // pointer controls for stylus / other non-mouse pointers
     const handlePointerDown = (e) => {
       if (!canvas) return;
       if (e.pointerType === "mouse") return;
@@ -300,14 +332,16 @@ export default function Game({
       }
     }
 
-    // reset
+    // reset run state
     setScore(0);
     state.tokens = [];
     state.bubbles = [];
     state.hazards = [];
+    state.powerUps = [];
     state.spawnTimer = 0;
     state.bubbleTimer = 0;
     state.hazardTimer = 0;
+    state.powerUpTimer = 0;
     state.hitFlash = 0;
     state.streak = 0;
     state.longestStreak = 0;
@@ -316,9 +350,16 @@ export default function Game({
     state.elapsed = 0;
     state.comboLevel = 1;
     state.milestoneStage = 0;
+    state.activePowerUps = {
+      magnet: 0,
+      shield: 0,
+      superComboHits: 0,
+    };
+    state.powerupLabel = "";
     setComboLevel(1);
     setMilestoneMessage("");
     setDailyActive(false);
+    setPowerupLabel("");
 
     state.player.y = canvas.height * 0.5;
     state.player.vy = 0;
@@ -336,6 +377,9 @@ export default function Game({
   };
 
   gameStateRef.current.showMilestone = showMilestone;
+  gameStateRef.current.updatePowerupLabel = (label) => {
+    setPowerupLabel(label);
+  };
 
   return (
     <div className="game-shell">
@@ -362,6 +406,9 @@ export default function Game({
             <div className="info-pill mission-pill">
               {missionCompletedLabel}
             </div>
+          )}
+          {powerupLabel && (
+            <div className="info-pill powerup-pill">{powerupLabel}</div>
           )}
           <button className="reset-btn" onClick={handleReset}>
             Reset
@@ -405,11 +452,20 @@ function updateGame(delta, canvas, stateRef, setScore, setComboLevel) {
   const state = stateRef.current;
   const { player, config } = state;
 
+  // decay hit flash
   if (state.hitFlash > 0) {
     state.hitFlash = Math.max(0, state.hitFlash - delta);
   }
 
+  // tick timers / elapsed
   state.elapsed += delta;
+
+  if (state.activePowerUps.magnet > 0) {
+    state.activePowerUps.magnet = Math.max(
+      0,
+      state.activePowerUps.magnet - delta
+    );
+  }
 
   // fish physics
   player.vy += GRAVITY * delta;
@@ -476,6 +532,32 @@ function updateGame(delta, canvas, stateRef, setScore, setComboLevel) {
     });
   }
 
+  // power-ups spawn
+  state.powerUpTimer += delta;
+  const powerupInterval =
+    BASE_POWERUP_INTERVAL * (config.powerupIntervalFactor ?? 1);
+  if (state.powerUpTimer >= powerupInterval && state.powerUps.length < 2) {
+    state.powerUpTimer = 0;
+
+    const margin = 100;
+    const py =
+      margin + Math.random() * (canvas.height - margin * 2 - player.radius * 2);
+
+    const roll = Math.random();
+    let kind = "magnet";
+    if (roll < 0.4) kind = "magnet";
+    else if (roll < 0.75) kind = "shield";
+    else kind = "super";
+
+    state.powerUps.push({
+      x: canvas.width + 50,
+      y: py,
+      radius: 18,
+      speed: (220 + Math.random() * 60) * (config.tokenSpeedFactor ?? 1),
+      kind,
+    });
+  }
+
   // move tokens & check collection
   for (let i = state.tokens.length - 1; i >= 0; i--) {
     const token = state.tokens[i];
@@ -489,7 +571,9 @@ function updateGame(delta, canvas, stateRef, setScore, setComboLevel) {
     const dx = token.x - player.x;
     const dy = token.y - player.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < token.radius + player.radius - 4) {
+    const magnetRadiusBonus = state.activePowerUps.magnet > 0 ? 20 : 0;
+
+    if (dist < token.radius + player.radius + magnetRadiusBonus - 4) {
       state.tokens.splice(i, 1);
 
       state.streak += 1;
@@ -504,12 +588,20 @@ function updateGame(delta, canvas, stateRef, setScore, setComboLevel) {
       else if (state.streak >= 10) newCombo = 3;
       else if (state.streak >= 5) newCombo = 2;
 
+      // Super combo power-up: bump combo by one tier for a few hits
+      if (state.activePowerUps.superComboHits > 0) {
+        newCombo += 1;
+        state.activePowerUps.superComboHits = Math.max(
+          0,
+          state.activePowerUps.superComboHits - 1
+        );
+      }
+
       if (newCombo !== state.comboLevel) {
         state.comboLevel = newCombo;
         setComboLevel(newCombo);
       }
 
-      // base gain with combo multiplier
       const multiplier = state.comboLevel;
       let gain = 1 * multiplier;
 
@@ -546,6 +638,7 @@ function updateGame(delta, canvas, stateRef, setScore, setComboLevel) {
     }
   }
 
+  // move bubbles
   for (let i = state.bubbles.length - 1; i >= 0; i--) {
     const b = state.bubbles[i];
     b.y -= b.vy * delta;
@@ -555,6 +648,7 @@ function updateGame(delta, canvas, stateRef, setScore, setComboLevel) {
     }
   }
 
+  // move hazards & check collisions
   for (let i = state.hazards.length - 1; i >= 0; i--) {
     const h = state.hazards[i];
     h.x -= h.speed * delta;
@@ -580,6 +674,16 @@ function updateGame(delta, canvas, stateRef, setScore, setComboLevel) {
         continue;
       }
 
+      // Power-up shield: consumes one hit
+      if (state.activePowerUps.shield > 0) {
+        state.activePowerUps.shield -= 1;
+        state.streak = 0;
+        state.comboLevel = 1;
+        setComboLevel(1);
+        // allow hit flash but no score loss
+        continue;
+      }
+
       // Star Tetra perk: first hit is shielded
       if (config.character === "star-tetra" && config.shieldAvailable) {
         config.shieldAvailable = false;
@@ -600,12 +704,58 @@ function updateGame(delta, canvas, stateRef, setScore, setComboLevel) {
       }
     }
   }
+
+  // move / collect power-ups
+  for (let i = state.powerUps.length - 1; i >= 0; i--) {
+    const p = state.powerUps[i];
+    p.x -= p.speed * delta;
+
+    if (p.x < -p.radius - 40) {
+      state.powerUps.splice(i, 1);
+      continue;
+    }
+
+    const dx = p.x - player.x;
+    const dy = p.y - player.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < p.radius + player.radius - 4) {
+      // apply effect
+      const active = state.activePowerUps;
+      if (p.kind === "magnet") {
+        active.magnet = 8; // seconds
+      } else if (p.kind === "shield") {
+        active.shield = Math.min(active.shield + 1, 2);
+      } else if (p.kind === "super") {
+        active.superComboHits = Math.min(active.superComboHits + 3, 6);
+      }
+
+      state.powerUps.splice(i, 1);
+    }
+  }
+
+  let label = "";
+  if (state.activePowerUps.magnet > 0) {
+    label = "Magnet active";
+  }
+  if (state.activePowerUps.shield > 0) {
+    label = label ? `${label} · Shield` : "Shield ready";
+  }
+  if (state.activePowerUps.superComboHits > 0) {
+    label = label ? `${label} · Super combo` : "Super combo";
+  }
+  if (label !== state.powerupLabel) {
+    state.powerupLabel = label;
+    if (stateRef.current.updatePowerupLabel) {
+      stateRef.current.updatePowerupLabel(label);
+    }
+  }
 }
 
 function drawGame(ctx, canvas, stateRef, character) {
   const state = stateRef.current;
-  const { player, tokens, bubbles, hazards, hitFlash } = state;
+  const { player, tokens, bubbles, hazards, powerUps, hitFlash } = state;
 
+  // background
   const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
   bgGrad.addColorStop(0, "#020318");
   bgGrad.addColorStop(0.45, "#031834");
@@ -613,7 +763,7 @@ function drawGame(ctx, canvas, stateRef, character) {
   ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // beams
+  // light beams
   ctx.save();
   ctx.globalAlpha = 0.35;
   const beamCount = 4;
@@ -699,6 +849,45 @@ function drawGame(ctx, canvas, stateRef, character) {
     ctx.beginPath();
     ctx.arc(token.x, token.y, token.radius - 4, 0, Math.PI * 2);
     ctx.stroke();
+  }
+  ctx.restore();
+
+  // power-up shells
+  ctx.save();
+  for (const p of powerUps) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+
+    const grad = ctx.createRadialGradient(0, -4, 4, 0, 0, p.radius + 4);
+    if (p.kind === "magnet") {
+      grad.addColorStop(0, "rgba(180,245,255,1)");
+      grad.addColorStop(0.4, "rgba(120,215,255,0.95)");
+      grad.addColorStop(1, "rgba(80,150,255,0.18)");
+    } else if (p.kind === "shield") {
+      grad.addColorStop(0, "rgba(190,255,220,1)");
+      grad.addColorStop(0.4, "rgba(130,245,190,0.95)");
+      grad.addColorStop(1, "rgba(40,200,140,0.18)");
+    } else {
+      grad.addColorStop(0, "rgba(255,230,255,1)");
+      grad.addColorStop(0.4, "rgba(255,160,240,0.95)");
+      grad.addColorStop(1, "rgba(255,47,208,0.2)");
+    }
+
+    ctx.fillStyle = grad;
+    ctx.strokeStyle = "rgba(255,255,255,0.6)";
+    ctx.lineWidth = 1.6;
+
+    // clamshell shape
+    ctx.beginPath();
+    ctx.moveTo(-p.radius, 4);
+    ctx.quadraticCurveTo(0, -p.radius * 0.9, p.radius, 4);
+    ctx.quadraticCurveTo(p.radius * 0.7, p.radius * 0.5, 0, p.radius * 0.7);
+    ctx.quadraticCurveTo(-p.radius * 0.7, p.radius * 0.5, -p.radius, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
   }
   ctx.restore();
 
