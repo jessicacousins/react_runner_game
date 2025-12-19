@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from "react";
 import "./Game.css";
 
@@ -100,6 +101,10 @@ export default function Game({
   const [milestoneMessage, setMilestoneMessage] = useState("");
   const [powerupLabel, setPowerupLabel] = useState("");
   const milestoneTimeoutRef = useRef(null);
+
+  // focus mode state 
+  const [isFocusMode, setIsFocusMode] = useState(false);
+  const bodyOverflowRef = useRef(null);
 
   // load best score, missions, and daily tide bonus on mount / safeMode change
   useEffect(() => {
@@ -285,6 +290,23 @@ export default function Game({
     };
   }, [character, difficulty, safeMode, mission]);
 
+  // NEW: lock body scroll while in focus mode
+  useEffect(() => {
+    if (bodyOverflowRef.current === null) {
+      bodyOverflowRef.current = document.body.style.overflow || "";
+    }
+
+    if (isFocusMode) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = bodyOverflowRef.current;
+    }
+
+    return () => {
+      document.body.style.overflow = bodyOverflowRef.current;
+    };
+  }, [isFocusMode]);
+
   const handleReset = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -382,7 +404,7 @@ export default function Game({
   };
 
   return (
-    <div className="game-shell">
+    <div className={`game-shell${isFocusMode ? " game-shell-full" : ""}`}>
       <div className="score-bar">
         <div className="score-group">
           <div className="score-box">
@@ -410,6 +432,16 @@ export default function Game({
           {powerupLabel && (
             <div className="info-pill powerup-pill">{powerupLabel}</div>
           )}
+
+          {/* NEW: Focus / “fullscreen” toggle */}
+          <button
+            type="button"
+            className={`fullscreen-btn${isFocusMode ? " is-active" : ""}`}
+            onClick={() => setIsFocusMode((prev) => !prev)}
+          >
+            {isFocusMode ? "Exit Focus" : "Focus Mode"}
+          </button>
+
           <button className="reset-btn" onClick={handleReset}>
             Reset
           </button>
