@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from "react";
 import "./Game.css";
 
@@ -47,6 +46,8 @@ export default function Game({
   mission = "collect20",
 }) {
   const canvasRef = useRef(null);
+  const shellRef = useRef(null);
+
   const gameStateRef = useRef({
     player: { x: 200, y: 225, radius: 26, vy: 0 },
     tokens: [],
@@ -102,9 +103,12 @@ export default function Game({
   const [powerupLabel, setPowerupLabel] = useState("");
   const milestoneTimeoutRef = useRef(null);
 
-  // focus mode state 
+  // focus mode state (overlay within page)
   const [isFocusMode, setIsFocusMode] = useState(false);
   const bodyOverflowRef = useRef(null);
+
+  // TRUE browser fullscreen state
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // load best score, missions, and daily tide bonus on mount / safeMode change
   useEffect(() => {
@@ -290,7 +294,7 @@ export default function Game({
     };
   }, [character, difficulty, safeMode, mission]);
 
-  // NEW: lock body scroll while in focus mode
+  // lock/unlock body scroll while in focus mode
   useEffect(() => {
     if (bodyOverflowRef.current === null) {
       bodyOverflowRef.current = document.body.style.overflow || "";
@@ -306,6 +310,67 @@ export default function Game({
       document.body.style.overflow = bodyOverflowRef.current;
     };
   }, [isFocusMode]);
+
+  // keep isFullscreen in sync with browser fullscreen state
+  useEffect(() => {
+    const handleFsChange = () => {
+      const fsElement =
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.msFullscreenElement;
+      setIsFullscreen(!!fsElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFsChange);
+    document.addEventListener("webkitfullscreenchange", handleFsChange);
+    document.addEventListener("MSFullscreenChange", handleFsChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFsChange);
+      document.removeEventListener("webkitfullscreenchange", handleFsChange);
+      document.removeEventListener("MSFullscreenChange", handleFsChange);
+    };
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    const elem = shellRef.current;
+    if (!elem || typeof document === "undefined") return;
+
+    const fsElement =
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.msFullscreenElement;
+
+    if (!fsElement) {
+      // enter fullscreen
+      const request =
+        elem.requestFullscreen ||
+        elem.webkitRequestFullscreen ||
+        elem.msRequestFullscreen;
+
+      if (request) {
+        try {
+          request.call(elem);
+        } catch {
+          // ignore errors (some mobile browsers are picky)
+        }
+      }
+    } else {
+      // exit fullscreen
+      const exit =
+        document.exitFullscreen ||
+        document.webkitExitFullscreen ||
+        document.msExitFullscreen;
+
+      if (exit) {
+        try {
+          exit.call(document);
+        } catch {
+          // ignore
+        }
+      }
+    }
+  };
 
   const handleReset = () => {
     const canvas = canvasRef.current;
@@ -404,7 +469,10 @@ export default function Game({
   };
 
   return (
-    <div className={`game-shell${isFocusMode ? " game-shell-full" : ""}`}>
+    <div
+      ref={shellRef}
+      className={`game-shell${isFocusMode ? " game-shell-full" : ""}`}
+    >
       <div className="score-bar">
         <div className="score-group">
           <div className="score-box">
@@ -433,13 +501,22 @@ export default function Game({
             <div className="info-pill powerup-pill">{powerupLabel}</div>
           )}
 
-          {/* NEW: Focus / “fullscreen” toggle */}
+          {/* Focus overlay (in-page) */}
           <button
             type="button"
             className={`fullscreen-btn${isFocusMode ? " is-active" : ""}`}
             onClick={() => setIsFocusMode((prev) => !prev)}
           >
             {isFocusMode ? "Exit Focus" : "Focus Mode"}
+          </button>
+
+          {/* fullscreen using browser API */}
+          <button
+            type="button"
+            className={`fullscreen-btn${isFullscreen ? " is-active" : ""}`}
+            onClick={handleToggleFullscreen}
+          >
+            {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
           </button>
 
           <button className="reset-btn" onClick={handleReset}>
