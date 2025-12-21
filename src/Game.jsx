@@ -905,20 +905,62 @@ function drawGame(ctx, canvas, stateRef, character) {
 
   // seaweed
   ctx.save();
-  ctx.lineWidth = 5;
+  const seaweedCount = Math.floor(canvas.width / 45);
+  const time = Date.now() / 1000;
+
   ctx.lineCap = "round";
-  for (let x = 40; x < canvas.width; x += 80) {
-    const height = 40 + (Math.sin(Date.now() / 900 + x * 0.07) + 1) * 25;
-    ctx.strokeStyle = "rgba(19, 219, 142, 0.85)";
-    ctx.beginPath();
-    ctx.moveTo(x, floorY + 8);
-    ctx.quadraticCurveTo(
-      x - 12,
-      floorY - height * 0.3,
-      x + 10,
-      floorY - height
+
+  for (let i = 0; i < seaweedCount; i++) {
+    const baseX =
+      30 + (i * (canvas.width - 60)) / Math.max(seaweedCount - 1, 1);
+
+    const baseHeight = 45 + (Math.sin(time * 0.8 + baseX * 0.04) + 1) * 28;
+    const sway = Math.sin(time * 1.1 + baseX * 0.06) * 10;
+
+    const grad = ctx.createLinearGradient(
+      baseX,
+      floorY,
+      baseX,
+      floorY - baseHeight
     );
+    grad.addColorStop(0, "rgba(6, 80, 50, 0.95)");
+    grad.addColorStop(0.5, "rgba(13, 219, 142, 0.98)");
+    grad.addColorStop(1, "rgba(190, 255, 230, 0.98)");
+
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 7;
+
+    ctx.beginPath();
+    ctx.moveTo(baseX, floorY + 10);
+
+    const segments = 3;
+    for (let s = 0; s < segments; s++) {
+      const tSeg = (s + 1) / segments;
+      const midY = floorY - (baseHeight * (s + 0.5)) / segments;
+      const endY = floorY - baseHeight * tSeg;
+
+      const offset = sway * (s + 1) * 0.45;
+      const ctrlX = baseX - offset * 0.4;
+      const endX = baseX + offset;
+
+      ctx.quadraticCurveTo(ctrlX, midY, endX, endY);
+    }
     ctx.stroke();
+
+    const shimmerPhase =
+      (time * 0.45 + baseX * 0.002 + Math.sin(baseX * 0.05)) % 1;
+
+    if (shimmerPhase > 0.1 && shimmerPhase < 0.95) {
+      const shimmerY = floorY - baseHeight * shimmerPhase;
+      const shimmerX = baseX + sway * shimmerPhase;
+
+      ctx.strokeStyle = "rgba(240, 255, 255, 0.9)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(shimmerX, shimmerY + 10);
+      ctx.lineTo(shimmerX, shimmerY - 10);
+      ctx.stroke();
+    }
   }
   ctx.restore();
 
