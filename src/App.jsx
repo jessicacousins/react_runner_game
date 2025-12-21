@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Game from "./Game.jsx";
 import "./index.css";
 
@@ -56,6 +56,26 @@ const MISSIONS = [
   },
 ];
 
+// --- Music config ----------------------------------------------------
+
+const MUSIC_TRACK_IDS = ["song1", "song2", "song3", "song4"];
+
+const MUSIC_SOURCES = {
+  song1: "/song1.mp3",
+  song2: "/song2.mp3",
+  song3: "/song3.mp3",
+  song4: "/song4.mp3",
+};
+
+const MUSIC_OPTIONS = [
+  { id: "playlist", label: "All Songs (Loop)" },
+  { id: "song1", label: "Song 1" },
+  { id: "song2", label: "Song 2" },
+  { id: "song3", label: "Song 3" },
+  { id: "song4", label: "Song 4" },
+  { id: "off", label: "Mute" },
+];
+
 export default function App() {
   const [selectedCharacter, setSelectedCharacter] = useState("neon-comet");
   const [difficulty, setDifficulty] = useState(() => {
@@ -75,6 +95,22 @@ export default function App() {
     return MISSIONS.some((m) => m.id === stored) ? stored : "collect20";
   });
 
+  // --- Music state ---------------------------------------------------
+
+  const [musicMode, setMusicMode] = useState(() => {
+    if (typeof window === "undefined") return "playlist";
+    const stored = window.localStorage.getItem("undersea_runner_musicMode");
+    const validIds = MUSIC_OPTIONS.map((m) => m.id);
+    return validIds.includes(stored) ? stored : "playlist";
+  });
+
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+
+  const audioRef = useRef(null);
+  const musicModeRef = useRef(musicMode);
+  const isMusicPlayingRef = useRef(isMusicPlaying);
+
   // keep localStorage in sync when user changes choices
   useEffect(() => {
     window.localStorage.setItem("undersea_runner_difficulty", difficulty);
@@ -91,8 +127,95 @@ export default function App() {
     window.localStorage.setItem("undersea_runner_mission", mission);
   }, [mission]);
 
+  useEffect(() => {
+    window.localStorage.setItem("undersea_runner_musicMode", musicMode);
+    musicModeRef.current = musicMode;
+  }, [musicMode]);
+
+  useEffect(() => {
+    isMusicPlayingRef.current = isMusicPlaying;
+  }, [isMusicPlaying]);
+
   const handleToggleSafeMode = () => {
     setSafeMode((prev) => !prev);
+  };
+
+  // music
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const audio = new Audio();
+    audio.volume = 0.6;
+    audio.loop = false;
+    audioRef.current = audio;
+
+    const handleEnded = () => {
+      if (!isMusicPlayingRef.current) return;
+      if (musicModeRef.current !== "playlist") return;
+
+      setCurrentTrackIndex((prev) => (prev + 1) % MUSIC_TRACK_IDS.length);
+    };
+
+    audio.addEventListener("ended", handleEnded);
+
+    return () => {
+      audio.pause();
+      audio.removeEventListener("ended", handleEnded);
+    };
+  }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    // paused or muted: stop audio
+    if (!isMusicPlaying || musicMode === "off") {
+      audio.pause();
+      return;
+    }
+
+    let trackId;
+
+    if (musicMode === "playlist") {
+      // walk through all four songs
+      trackId = MUSIC_TRACK_IDS[currentTrackIndex];
+      audio.loop = false;
+    } else {
+      trackId = musicMode;
+      audio.loop = true;
+    }
+
+    const src = MUSIC_SOURCES[trackId];
+    if (!src) return;
+
+    const fullUrl = new URL(src, window.location.origin).href;
+
+    if (audio.src !== fullUrl) {
+      audio.src = fullUrl;
+      audio.currentTime = 0;
+    }
+
+    const playPromise = audio.play();
+    if (playPromise && playPromise.catch) {
+      playPromise.catch(() => {});
+    }
+  }, [musicMode, currentTrackIndex, isMusicPlaying]);
+
+  const handleToggleMusicPlayback = () => {
+    setIsMusicPlaying((prev) => {
+      const next = !prev;
+
+      if (next && musicMode === "off") {
+        setMusicMode("playlist");
+        setCurrentTrackIndex(0);
+      }
+
+      if (!next && audioRef.current) {
+        audioRef.current.pause();
+      }
+
+      return next;
+    });
   };
 
   return (
@@ -110,9 +233,9 @@ export default function App() {
           <div className="shell-header">
             <h1>Swim Through the Deep</h1>
             <p>
-              Guide your fish through a glowing underwater lane, pick up
-              tokens, and dodge jellyfish and sharks. Your best scores are saved
-              locally in this browser for both regular and Safe Reef modes.
+              Guide your fish through a glowing underwater lane, pick up tokens,
+              and dodge jellyfish and sharks. Your best scores are saved locally
+              in this browser for both regular and Safe Reef modes.
             </p>
           </div>
 
@@ -172,6 +295,52 @@ export default function App() {
                 >
                   <span className="mission-chip-main">{m.label}</span>
                   <span className="mission-chip-sub">{m.subtitle}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Music controls */}
+          <div className="music-row">
+            <span className="music-label">Music</span>
+            <div className="music-options">
+              {/* Play / Pause */}
+              <button
+                type="button"
+                className={
+                  "music-chip music-chip-control" +
+                  (isMusicPlaying && musicMode !== "off" ? " is-active" : "")
+                }
+                onClick={handleToggleMusicPlayback}
+              >
+                {isMusicPlaying && musicMode !== "off" ? "Pause" : "Play"}
+              </button>
+
+              {/* Modes / tracks */}
+              {MUSIC_OPTIONS.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  className={
+                    "music-chip" + (musicMode === opt.id ? " is-active" : "")
+                  }
+                  onClick={() => {
+                    if (opt.id === "playlist") {
+                      setCurrentTrackIndex(0);
+                    }
+                    setMusicMode(opt.id);
+
+                    if (opt.id === "off") {
+                      setIsMusicPlaying(false);
+                      if (audioRef.current) {
+                        audioRef.current.pause();
+                      }
+                    } else {
+                      setIsMusicPlaying(true);
+                    }
+                  }}
+                >
+                  <span className="music-chip-main">{opt.label}</span>
                 </button>
               ))}
             </div>

@@ -265,6 +265,71 @@ body {
   color: var(--text-dim);
 }
 
+/* music controls */
+.music-chip-control {
+  border-color: rgba(163, 245, 255, 0.7);
+}
+
+.music-chip-control.is-active {
+  border-color: rgba(163, 245, 255, 1);
+  box-shadow: 0 0 18px rgba(163, 245, 255, 0.75);
+}
+
+.music-row {
+  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.music-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--text-dim);
+}
+
+.music-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.music-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(5, 7, 15, 0.9);
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: border-color 140ms ease-out, background 140ms ease-out,
+    box-shadow 160ms ease-out, transform 120ms ease-out;
+}
+
+.music-chip:hover {
+  border-color: rgba(255, 47, 208, 0.5);
+  box-shadow: 0 0 14px rgba(255, 47, 208, 0.4);
+  transform: translateY(-1px);
+}
+
+.music-chip.is-active {
+  border-color: var(--accent);
+  color: var(--text-main);
+  box-shadow: 0 0 20px rgba(255, 47, 208, 0.65);
+  background: radial-gradient(
+    circle at top left,
+    rgba(255, 47, 208, 0.32),
+    rgba(5, 7, 16, 0.96)
+  );
+}
+
+.music-chip-main {
+  font-size: 0.72rem;
+}
+
 /* difficulty row */
 .mode-row {
   margin-bottom: 4px;
