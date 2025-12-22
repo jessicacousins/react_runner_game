@@ -541,7 +541,7 @@ export default function Game({
           height={480}
           className="game-canvas"
         />
-        <div className="canvas-hint">
+        {/* <div className="canvas-hint">
           <div>Swim & collect tokens. Tap top / bottom on mobile.</div>
           <div className="canvas-mission-line">
             Mission: {mission === "collect20" && "Collect 20 tokens"}
@@ -551,7 +551,7 @@ export default function Game({
           {milestoneMessage && (
             <div className="canvas-milestone">{milestoneMessage}</div>
           )}
-        </div>
+        </div> */}
       </div>
     </div>
   );
