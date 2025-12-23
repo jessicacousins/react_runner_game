@@ -1216,7 +1216,7 @@ function drawGame(ctx, canvas, stateRef, character) {
   ctx.strokeStyle = "rgba(0,0,0,0.6)";
   ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.arc(player.radius * 1, 4, 6, 0.15 * Math.PI, 0.85 * Math.PI);
+  ctx.arc(player.radius * 1.1, 4, 6, 0.15 * Math.PI, 0.85 * Math.PI);
   ctx.stroke();
 
   ctx.restore();
