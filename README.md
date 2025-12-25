@@ -1,4 +1,4 @@
-# Runner Game - Vite React
+# Underwater Runner Game - Vite React
 
 ## Website Live at:
 
