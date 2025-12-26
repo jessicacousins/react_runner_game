@@ -76,8 +76,11 @@ const MUSIC_OPTIONS = [
   { id: "off", label: "Mute" },
 ];
 
+const THEME_KEY = "undersea_runner_theme";
+
 export default function App() {
   const [selectedCharacter, setSelectedCharacter] = useState("neon-comet");
+
   const [difficulty, setDifficulty] = useState(() => {
     if (typeof window === "undefined") return "current";
     const stored = window.localStorage.getItem("undersea_runner_difficulty");
@@ -94,6 +97,19 @@ export default function App() {
     const stored = window.localStorage.getItem("undersea_runner_mission");
     return MISSIONS.some((m) => m.id === stored) ? stored : "collect20";
   });
+
+  // --- Theme state (dark / light) ------------------------------------
+
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === "undefined") return "dark";
+    const stored = window.localStorage.getItem(THEME_KEY);
+    return stored === "light" ? "light" : "dark";
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(THEME_KEY, theme);
+  }, [theme]);
 
   // --- Music state ---------------------------------------------------
 
@@ -218,14 +234,35 @@ export default function App() {
     });
   };
 
+  const isDark = theme === "dark";
+
   return (
-    <div className="app-root">
+    <div className={`app-root ${isDark ? "theme-dark" : "theme-light"}`}>
       <header className="app-header">
         <div className="brand-mark">
           <span className="brand-dot" />
           <span className="brand-text">Undersea Runner</span>
         </div>
-        <div className="accent-pill">FISH Edition</div>
+
+        <div className="header-right">
+          <div className="accent-pill">FISH Edition</div>
+          <div className="theme-toggle" aria-label="Theme">
+            <button
+              type="button"
+              className={"theme-chip" + (isDark ? " is-active" : "")}
+              onClick={() => setTheme("dark")}
+            >
+              Night
+            </button>
+            <button
+              type="button"
+              className={"theme-chip" + (!isDark ? " is-active" : "")}
+              onClick={() => setTheme("light")}
+            >
+              Day
+            </button>
+          </div>
+        </div>
       </header>
 
       <main className="app-main">
