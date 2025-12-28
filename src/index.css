@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap");
+
 :root {
   --bg-deep: #050714;
   --bg-surface: rgba(255, 255, 255, 0.03);
@@ -19,6 +21,9 @@
 
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --heading-main: #9fdcff; /* light aqua dark mode */
+  --heading-accent: #5bb2ff; /* dark blue light mode */
 }
 
 .app-root.theme-light {
@@ -37,6 +42,9 @@
 
   --shadow-float: 0 20px 50px rgba(0, 100, 120, 0.15);
   --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+
+  --heading-main: #0b4975; /* heading dark blue */
+  --heading-accent: #0f74bf; /* header brighter blue accent */
 }
 
 *,
@@ -233,9 +241,18 @@ body {
   font-size: clamp(1.8rem, 4vw, 2.5rem);
   letter-spacing: -0.02em;
   line-height: 1.1;
-  background: linear-gradient(135deg, var(--text-main) 30%, var(--text-muted));
+
+  font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  background: linear-gradient(
+    135deg,
+    var(--heading-main),
+    var(--heading-accent)
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+
+  text-shadow: 0 0 18px rgba(0, 0, 0, 0.45);
 }
 
 .shell-header p {
