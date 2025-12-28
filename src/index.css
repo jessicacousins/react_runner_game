@@ -249,10 +249,32 @@ body {
     var(--heading-main),
     var(--heading-accent)
   );
+  background-size: 220% 220%;
+  background-position: 0% 50%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 
   text-shadow: 0 0 18px rgba(0, 0, 0, 0.45);
+
+  animation: swimTitleGradient 14s ease-in-out infinite;
+}
+
+@keyframes swimTitleGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell-header h1 {
+    animation: none;
+  }
 }
 
 .shell-header p {
