@@ -276,6 +276,18 @@ export default function App() {
             </p>
           </div>
 
+          {/* loop  */}
+          <div className="ambient-video-panel">
+            <video
+              className="ambient-video"
+              src="/bubblesloop.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
+          </div>
+
           {/* Character picker */}
           <div className="character-row">
             <span className="character-label">Choose your fish</span>
