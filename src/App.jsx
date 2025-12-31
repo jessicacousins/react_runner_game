@@ -277,7 +277,18 @@ export default function App() {
           </div>
 
           {/* loop  */}
+          {/* <div className="ambient-video-panel">
+            <video
+              className="ambient-video"
+              src="/bubblesloop.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
+          </div> */}
           <div className="ambient-video-panel">
+            <div className="ambient-video-title">Swim Through the Deep</div>
             <video
               className="ambient-video"
               src="/bubblesloop.mp4"
