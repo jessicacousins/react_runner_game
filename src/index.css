@@ -539,3 +539,28 @@ body {
     gap: 16px;
   }
 }
+/* !  keyboard focus rings */
+.theme-chip:focus-visible,
+.character-chip:focus-visible,
+.mode-chip:focus-visible,
+.mission-chip:focus-visible,
+.music-chip:focus-visible,
+.safe-toggle:focus-visible {
+  outline: none;
+
+  transform: translateY(-3px) scale(1.02);
+
+  box-shadow: 0 0 0 2px var(--accent-secondary),
+    0 0 0 5px rgba(0, 240, 255, 0.25), 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-chip:focus-visible,
+  .character-chip:focus-visible,
+  .mode-chip:focus-visible,
+  .mission-chip:focus-visible,
+  .music-chip:focus-visible,
+  .safe-toggle:focus-visible {
+    transform: none;
+  }
+}
