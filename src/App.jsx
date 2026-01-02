@@ -125,6 +125,7 @@ export default function App() {
   const [gateAccepted, setGateAccepted] = useState(false);
 
   const [showHowTo, setShowHowTo] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
     window.localStorage.setItem("undersea_runner_difficulty", difficulty);
@@ -267,117 +268,6 @@ export default function App() {
         <section className="shell-panel">
           <div className="shell-header">
             <h1>Swim Through the Deep</h1>
-            <p>
-              Guide your fish through a glowing underwater lane, pick up tokens,
-              and dodge jellyfish and sharks. Your best scores are saved locally
-              in this browser for both regular and Safe Reef modes.
-            </p>
-          </div>
-
-          {/* Character picker */}
-          <div className="character-row">
-            <span className="character-label">Choose your fish</span>
-            <div className="character-options">
-              {CHARACTERS.map((ch) => (
-                <button
-                  key={ch.id}
-                  className={
-                    "character-chip" +
-                    (selectedCharacter === ch.id ? " is-active" : "")
-                  }
-                  onClick={() => setSelectedCharacter(ch.id)}
-                >
-                  <span className={`character-swatch ${ch.id}`} />
-                  <span className="character-chip-text">
-                    <span className="character-chip-name">{ch.name}</span>
-                    <span className="character-chip-sub">{ch.subtitle}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Difficulty picker */}
-          <div className="mode-row">
-            <span className="mode-label">Tides difficulty</span>
-            <div className="mode-options">
-              {DIFFICULTIES.map((d) => (
-                <button
-                  key={d.id}
-                  className={
-                    "mode-chip" + (difficulty === d.id ? " is-active" : "")
-                  }
-                  onClick={() => setDifficulty(d.id)}
-                >
-                  <span className="mode-chip-main">{d.label}</span>
-                  <span className="mode-chip-sub">{d.subtitle}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Mission picker */}
-          <div className="mission-row">
-            <span className="mission-label">Reef mission</span>
-            <div className="mission-options">
-              {MISSIONS.map((m) => (
-                <button
-                  key={m.id}
-                  className={
-                    "mission-chip" + (mission === m.id ? " is-active" : "")
-                  }
-                  onClick={() => setMission(m.id)}
-                >
-                  <span className="mission-chip-main">{m.label}</span>
-                  <span className="mission-chip-sub">{m.subtitle}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Music controls */}
-          <div className="music-row">
-            <span className="music-label">Music</span>
-            <div className="music-options">
-              {/* Play / Pause */}
-              <button
-                type="button"
-                className={
-                  "music-chip music-chip-control" +
-                  (isMusicPlaying && musicMode !== "off" ? " is-active" : "")
-                }
-                onClick={handleToggleMusicPlayback}
-              >
-                {isMusicPlaying && musicMode !== "off" ? "Pause" : "Play"}
-              </button>
-
-              {MUSIC_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className={
-                    "music-chip" + (musicMode === opt.id ? " is-active" : "")
-                  }
-                  onClick={() => {
-                    if (opt.id === "playlist") {
-                      setCurrentTrackIndex(0);
-                    }
-                    setMusicMode(opt.id);
-
-                    if (opt.id === "off") {
-                      setIsMusicPlaying(false);
-                      if (audioRef.current) {
-                        audioRef.current.pause();
-                      }
-                    } else {
-                      setIsMusicPlaying(true);
-                    }
-                  }}
-                >
-                  <span className="music-chip-main">{opt.label}</span>
-                </button>
-              ))}
-            </div>
           </div>
 
           <Game
@@ -394,16 +284,27 @@ export default function App() {
               className="howto-pill"
               onClick={() => setShowHowTo(true)}
             >
-              How to play &amp; controls
+              How to play &amp; movement
             </button>
-            <button
-              type="button"
-              className={"safe-toggle" + (safeMode ? " is-active" : "")}
-              onClick={handleToggleSafeMode}
-            >
-              <span className="safe-toggle-dot" />
-              Safe Reef Mode
-            </button>
+
+            <div className="shell-footer-actions">
+              <button
+                type="button"
+                className="options-pill"
+                onClick={() => setIsSettingsOpen(true)}
+              >
+                Settings / Options
+              </button>
+
+              <button
+                type="button"
+                className={"safe-toggle" + (safeMode ? " is-active" : "")}
+                onClick={handleToggleSafeMode}
+              >
+                <span className="safe-toggle-dot" />
+                Safe Reef Mode
+              </button>
+            </div>
           </footer>
         </section>
       </main>
@@ -414,8 +315,9 @@ export default function App() {
           role="dialog"
           aria-modal="true"
           aria-label="How to play"
+          onClick={() => setShowHowTo(false)}
         >
-          <div className="overlay-panel">
+          <div className="overlay-panel" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
               className="overlay-close"
@@ -460,6 +362,147 @@ export default function App() {
         </div>
       )}
 
+      {/* options overlay */}
+      {isSettingsOpen && (
+        <div
+          className="overlay-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Game settings and options"
+          onClick={() => setIsSettingsOpen(false)}
+        >
+          <div
+            className="overlay-panel overlay-panel-settings"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="overlay-settings-header">
+              <h2 className="overlay-settings-title">Game options</h2>
+              <button
+                type="button"
+                className="overlay-settings-close"
+                onClick={() => setIsSettingsOpen(false)}
+                aria-label="Close settings"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="overlay-settings-lede">
+              Guide your fish through a glowing underwater lane, pick up tokens,
+              and dodge jellyfish and sharks. Your best scores are saved locally
+              in this browser for both regular and Safe Reef modes.
+            </p>
+
+            {/* Character picker */}
+            <div className="character-row">
+              <span className="character-label">Choose your fish</span>
+              <div className="character-options">
+                {CHARACTERS.map((ch) => (
+                  <button
+                    key={ch.id}
+                    className={
+                      "character-chip" +
+                      (selectedCharacter === ch.id ? " is-active" : "")
+                    }
+                    onClick={() => setSelectedCharacter(ch.id)}
+                  >
+                    <span className={`character-swatch ${ch.id}`} />
+                    <span className="character-chip-text">
+                      <span className="character-chip-name">{ch.name}</span>
+                      <span className="character-chip-sub">{ch.subtitle}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Difficulty picker */}
+            <div className="mode-row">
+              <span className="mode-label">Tides difficulty</span>
+              <div className="mode-options">
+                {DIFFICULTIES.map((d) => (
+                  <button
+                    key={d.id}
+                    className={
+                      "mode-chip" + (difficulty === d.id ? " is-active" : "")
+                    }
+                    onClick={() => setDifficulty(d.id)}
+                  >
+                    <span className="mode-chip-main">{d.label}</span>
+                    <span className="mode-chip-sub">{d.subtitle}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Mission picker */}
+            <div className="mission-row">
+              <span className="mission-label">Reef mission</span>
+              <div className="mission-options">
+                {MISSIONS.map((m) => (
+                  <button
+                    key={m.id}
+                    className={
+                      "mission-chip" + (mission === m.id ? " is-active" : "")
+                    }
+                    onClick={() => setMission(m.id)}
+                  >
+                    <span className="mission-chip-main">{m.label}</span>
+                    <span className="mission-chip-sub">{m.subtitle}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Music controls */}
+            <div className="music-row">
+              <span className="music-label">Music</span>
+              <div className="music-options">
+                {/* Play / Pause */}
+                <button
+                  type="button"
+                  className={
+                    "music-chip music-chip-control" +
+                    (isMusicPlaying && musicMode !== "off" ? " is-active" : "")
+                  }
+                  onClick={handleToggleMusicPlayback}
+                >
+                  {isMusicPlaying && musicMode !== "off" ? "Pause" : "Play"}
+                </button>
+
+                {MUSIC_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    className={
+                      "music-chip" + (musicMode === opt.id ? " is-active" : "")
+                    }
+                    onClick={() => {
+                      if (opt.id === "playlist") {
+                        setCurrentTrackIndex(0);
+                      }
+                      setMusicMode(opt.id);
+
+                      if (opt.id === "off") {
+                        setIsMusicPlaying(false);
+                        if (audioRef.current) {
+                          audioRef.current.pause();
+                        }
+                      } else {
+                        setIsMusicPlaying(true);
+                      }
+                    }}
+                  >
+                    <span className="music-chip-main">{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* gate */}
       {showGate && (
         <div className="gate-overlay">
           <div className="gate-modal">
