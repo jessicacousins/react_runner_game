@@ -56,8 +56,6 @@ const MISSIONS = [
   },
 ];
 
-// --- Music config ----------------------------------------------------
-
 const MUSIC_TRACK_IDS = ["song1", "song2", "song3", "song4"];
 
 const MUSIC_SOURCES = {
@@ -98,8 +96,6 @@ export default function App() {
     return MISSIONS.some((m) => m.id === stored) ? stored : "collect20";
   });
 
-  // --- Theme state (dark / light) ------------------------------------
-
   const [theme, setTheme] = useState(() => {
     if (typeof window === "undefined") return "dark";
     const stored = window.localStorage.getItem(THEME_KEY);
@@ -110,8 +106,6 @@ export default function App() {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(THEME_KEY, theme);
   }, [theme]);
-
-  // --- Music state ---------------------------------------------------
 
   const [musicMode, setMusicMode] = useState(() => {
     if (typeof window === "undefined") return "playlist";
@@ -127,7 +121,11 @@ export default function App() {
   const musicModeRef = useRef(musicMode);
   const isMusicPlayingRef = useRef(isMusicPlaying);
 
-  // keep localStorage in sync when user changes choices
+  const [showGate, setShowGate] = useState(true);
+  const [gateAccepted, setGateAccepted] = useState(false);
+
+  const [showHowTo, setShowHowTo] = useState(false);
+
   useEffect(() => {
     window.localStorage.setItem("undersea_runner_difficulty", difficulty);
   }, [difficulty]);
@@ -276,29 +274,6 @@ export default function App() {
             </p>
           </div>
 
-          {/* loop  */}
-          {/* <div className="ambient-video-panel">
-            <video
-              className="ambient-video"
-              src="/bubblesloop.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-            />
-          </div> */}
-          <div className="ambient-video-panel">
-            <div className="ambient-video-title">Swim Through the Deep</div>
-            <video
-              className="ambient-video"
-              src="/bubblesloop.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-            />
-          </div>
-
           {/* Character picker */}
           <div className="character-row">
             <span className="character-label">Choose your fish</span>
@@ -376,7 +351,6 @@ export default function App() {
                 {isMusicPlaying && musicMode !== "off" ? "Pause" : "Play"}
               </button>
 
-              {/* Modes / tracks */}
               {MUSIC_OPTIONS.map((opt) => (
                 <button
                   key={opt.id}
@@ -415,15 +389,13 @@ export default function App() {
           />
 
           <footer className="shell-footer">
-            <p>
-              <span className="kbd">Space</span> /{" "}
-              <span className="kbd">↑</span> to swim up.{" "}
-              <span className="kbd">↓</span> to glide down. On touch devices,
-              tap the top or bottom half of the game area to move. In regular
-              mode, hazards subtract points; in{" "}
-              <span className="accent">Safe Reef</span> mode, hazards are visual
-              only.
-            </p>
+            <button
+              type="button"
+              className="howto-pill"
+              onClick={() => setShowHowTo(true)}
+            >
+              How to play &amp; controls
+            </button>
             <button
               type="button"
               className={"safe-toggle" + (safeMode ? " is-active" : "")}
@@ -435,6 +407,115 @@ export default function App() {
           </footer>
         </section>
       </main>
+
+      {showHowTo && (
+        <div
+          className="overlay-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="How to play"
+        >
+          <div className="overlay-panel">
+            <button
+              type="button"
+              className="overlay-close"
+              aria-label="Close"
+              onClick={() => setShowHowTo(false)}
+            >
+              ×
+            </button>
+            <h2 className="overlay-title">How to play</h2>
+            <p className="howto-body">
+              <span className="kbd">Space</span> /{" "}
+              <span className="kbd">↑</span> to swim up.{" "}
+              <span className="kbd">↓</span> to glide down. On touch devices,
+              tap the top or bottom half of the game area to move. In regular
+              mode, hazards subtract points; in{" "}
+              <span className="accent">Safe Reef</span> mode, hazards are visual
+              only.
+            </p>
+            <ul className="howto-list">
+              <li>
+                <strong>Fish:</strong> pick one of the three fish at the top for
+                different perks.
+              </li>
+              <li>
+                <strong>Tides difficulty:</strong> Calm, Open Current, or Storm
+                Trench adjust speed and hazard frequency.
+              </li>
+              <li>
+                <strong>Reef mission:</strong> choose a run goal (tokens,
+                survival, or no-hits).
+              </li>
+              <li>
+                <strong>Music:</strong> play/pause, loop all four tracks, or
+                select a single song, or mute.
+              </li>
+              <li>
+                <strong>Safe Reef Mode:</strong> toggle in the footer to turn
+                hazards into visuals only.
+              </li>
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {showGate && (
+        <div className="gate-overlay">
+          <div className="gate-modal">
+            <div className="gate-video-shell">
+              <video
+                className="gate-video"
+                src="/bubblesloop.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+              />
+            </div>
+            <div className="gate-content">
+              <h2>Welcome to Swim Through the Deep</h2>
+              <p>
+                This is a small, experimental browser game. Scores are stored
+                only in your local device storage; no account or personal data
+                is collected or sent anywhere.
+              </p>
+              <p>
+                By continuing, you confirm that you understand this is a casual
+                arcade-style experience and that any music, art, and code are
+                for personal entertainment only. A full legal and copyright page
+                will be added here soon.
+              </p>
+              <label className="gate-checkbox">
+                <input
+                  type="checkbox"
+                  checked={gateAccepted}
+                  onChange={(e) => setGateAccepted(e.target.checked)}
+                />
+                <span>
+                  I understand the above and agree to the placeholder terms &
+                  copyright notice.
+                </span>
+              </label>
+              <button
+                type="button"
+                className={
+                  "gate-button" +
+                  (gateAccepted ? " is-enabled" : " is-disabled")
+                }
+                disabled={!gateAccepted}
+                onClick={() => setShowGate(false)}
+              >
+                Enter the reef
+              </button>
+              <p className="gate-legal-note">
+                This notice will appear on every refresh so it&apos;s easy to
+                re-read before you play.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
