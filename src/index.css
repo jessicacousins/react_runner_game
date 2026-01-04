@@ -1424,7 +1424,6 @@ body {
   }
 }
 
-
 .shell-footer-actions {
   display: flex;
   align-items: center;
@@ -1456,7 +1455,6 @@ body {
   border-color: rgba(255, 255, 255, 0.4);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
-
 
 .overlay-panel-settings {
   display: flex;
@@ -1531,4 +1529,50 @@ body {
   .overlay-panel-settings {
     max-height: 90vh;
   }
+}
+
+.accent {
+  color: var(--accent-secondary);
+  font-weight: 650;
+}
+
+.character-label,
+.mode-label,
+.mission-label,
+.music-label {
+  color: var(--accent-secondary);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+
+.music-label {
+  color: var(--accent-primary);
+}
+
+.character-chip-name,
+.mode-chip-main,
+.mission-chip-main {
+  font-weight: 700;
+  color: var(--accent-secondary);
+}
+
+.character-chip-sub,
+.mode-chip-sub,
+.mission-chip-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  opacity: 0.9;
+}
+
+.character-chip.is-active .character-chip-name,
+.mode-chip.is-active .mode-chip-main,
+.mission-chip.is-active .mission-chip-main {
+  color: #ffffff;
+}
+
+.overlay-settings-title {
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-secondary);
+  font-weight: 700;
 }
