@@ -242,7 +242,7 @@ body {
   font-size: clamp(1.8rem, 4vw, 2.5rem);
   letter-spacing: -0.02em;
   line-height: 1.1;
-
+  text-align: center;
   font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   background: linear-gradient(
