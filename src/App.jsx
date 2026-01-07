@@ -502,11 +502,16 @@ export default function App() {
         </div>
       )}
 
-      {/* gate */}
+      {/* legal gate */}
       {showGate && (
-        <div className="gate-overlay">
+        <div
+          className="gate-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Before you enter the reef"
+        >
           <div className="gate-modal">
-            <div className="gate-video-shell">
+            <div className="gate-media">
               <video
                 className="gate-video"
                 src="/bubblesloop.mp4"
@@ -515,20 +520,61 @@ export default function App() {
                 muted
                 playsInline
               />
+              <div className="gate-mediaShade" />
+              <div className="gate-mediaBadge">
+                <div className="gate-badgeTitle">Undersea Runner</div>
+                <div className="gate-badgeSub">
+                  Browser arcade • local-only scores
+                </div>
+              </div>
             </div>
+
             <div className="gate-content">
-              <h2>Welcome to Swim Through the Deep</h2>
-              <p>
-                This is a small, experimental browser game. Scores are stored
-                only in your local device storage; no account or personal data
-                is collected or sent anywhere.
-              </p>
-              <p>
-                By continuing, you confirm that you understand this is a casual
-                arcade-style experience and that any music, art, and code are
-                for personal entertainment only. A full legal and copyright page
-                will be added here soon.
-              </p>
+              <div className="gate-top">
+                <h2 className="gate-title">Before you enter the reef</h2>
+                <p className="gate-sub">
+                  Bright effects + quick motion. Take breaks if you feel
+                  discomfort.
+                </p>
+              </div>
+
+              <div className="gate-copy" role="note" aria-label="Legal summary">
+                <p>
+                  <strong>Privacy:</strong> High scores are saved locally in
+                  your browser storage. No accounts, logins, or personal data
+                  are collected or sent.
+                </p>
+
+                <p>
+                  <strong>Copyright:</strong> Undersea Runner and all related
+                  content (gameplay, code, UI, visuals, audio, and text) are
+                  protected by intellectual property laws. © 2026. All rights
+                  reserved.
+                </p>
+
+                <p>
+                  <strong>License to play:</strong> You may play this game for
+                  personal, non-commercial entertainment only. You may not copy,
+                  reproduce, redistribute, publish, upload elsewhere, sell,
+                  reverse engineer, or create derivative works from any part of
+                  the game without prior written permission.
+                </p>
+              </div>
+
+              <div className="gate-miniActions">
+                <button
+                  type="button"
+                  className="gate-linkBtn"
+                  onClick={() => {
+                    const dlg = document.getElementById("gateLegalDialog");
+                    if (dlg && typeof dlg.showModal === "function")
+                      dlg.showModal();
+                  }}
+                >
+                  Read full Legal / Disclaimer
+                </button>
+              </div>
+
               <label className="gate-checkbox">
                 <input
                   type="checkbox"
@@ -536,10 +582,11 @@ export default function App() {
                   onChange={(e) => setGateAccepted(e.target.checked)}
                 />
                 <span>
-                  I understand the above and agree to the placeholder terms &
-                  copyright notice.
+                  I understand and agree to the Legal / Disclaimer, including
+                  the no-copy / no-redistribution terms.
                 </span>
               </label>
+
               <button
                 type="button"
                 className={
@@ -551,12 +598,78 @@ export default function App() {
               >
                 Enter the reef
               </button>
+
               <p className="gate-legal-note">
-                This notice will appear on every refresh so it&apos;s easy to
-                re-read before you play.
+                © 2026 Undersea Runner. All rights reserved.
               </p>
             </div>
           </div>
+
+          {/* Full legal popup (no extra React state needed) */}
+          <dialog id="gateLegalDialog" className="gate-dialog">
+            <div className="gate-dialogHead">
+              <div className="gate-dialogTitle">Legal / Disclaimer</div>
+              <button
+                type="button"
+                className="gate-dialogClose"
+                aria-label="Close legal"
+                onClick={(e) => {
+                  const dlg = e.currentTarget.closest("dialog");
+                  if (dlg) dlg.close();
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="gate-dialogBody">
+              <p>
+                <strong>Ownership.</strong> Undersea Runner and all associated
+                content (including gameplay, code, UI, visuals, audio, and text)
+                are owned by the creator and protected by copyright and other
+                intellectual property laws. © 2026. All rights reserved.
+              </p>
+
+              <p>
+                <strong>Permitted use.</strong> You may access and play the game
+                for personal, non-commercial entertainment.
+              </p>
+
+              <p>
+                <strong>Prohibited.</strong> You may not copy, reproduce,
+                distribute, publicly display, publish, upload to other sites,
+                sell, license, rent, reverse engineer, decompile, scrape, or
+                create derivative works from any portion of the game or its
+                assets, except as expressly permitted by applicable law or by
+                prior written permission.
+              </p>
+
+              <p>
+                <strong>Disclaimer.</strong> The game is provided “as is” and
+                “as available” without warranties of any kind. To the maximum
+                extent permitted by law, the creator is not liable for any
+                indirect, incidental, special, consequential, or punitive
+                damages arising from or related to the use of the game.
+              </p>
+
+              <p>
+                <strong>Privacy.</strong> Scores are stored locally in your
+                browser. No personal data is intentionally collected or
+                transmitted.
+              </p>
+
+              <p>
+                <strong>Agreement.</strong> By continuing to play, you agree to
+                these terms. If you do not agree, do not play.
+              </p>
+            </div>
+
+            <form method="dialog" className="gate-dialogFooter">
+              <button className="gate-dialogOk" type="submit">
+                Done
+              </button>
+            </form>
+          </dialog>
         </div>
       )}
     </div>
