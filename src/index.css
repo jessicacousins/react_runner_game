@@ -812,7 +812,6 @@ body {
   color: var(--text-dim);
 }
 
-
 @media (max-width: 768px) {
   .gate-modal {
     grid-template-columns: 1fr;
@@ -906,7 +905,6 @@ body {
   box-shadow: 0 12px 30px var(--accent-glow);
 }
 
-/* Light theme friendliness */
 .app-root.theme-light .gate-dialog,
 .app-root.theme-light .gate-modal {
   background: rgba(255, 255, 255, 0.92);
