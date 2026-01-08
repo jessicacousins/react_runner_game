@@ -522,7 +522,7 @@ export default function App() {
               />
               <div className="gate-mediaShade" />
               <div className="gate-mediaBadge">
-                <div className="gate-badgeTitle">Undersea Runner</div>
+                <div className="gate-badgeTitle">Undersea Runner Game</div>
                 <div className="gate-badgeSub">
                   Browser arcade • local-only scores
                 </div>
@@ -531,7 +531,7 @@ export default function App() {
 
             <div className="gate-content">
               <div className="gate-top">
-                <h2 className="gate-title">Before you enter the reef</h2>
+                <h2 className="gate-title">WARNING: Before you enter the reef</h2>
                 <p className="gate-sub">
                   Bright effects + quick motion. Take breaks if you feel
                   discomfort.
