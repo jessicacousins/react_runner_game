@@ -12,10 +12,36 @@ Vite + React endless runner game with canvas-based gameplay and localStorage per
 
 ## License & Attribution
 
-This project is licensed under the Creative Commons Attribution 4.0 International (CC BY 4.0). You are free to:
+### Copyright & Ownership
 
-Share — copy and redistribute the material in any medium or format Adapt — remix, transform, and build upon the material for any purpose, even commercially Under the following terms:
+Undersea Runner (also referred to as “Underwater Runner Game”) and all related content—including gameplay, code, UI, visuals, audio, and text—are protected by copyright and other intellectual property laws. © 2026. All rights reserved.
 
-Attribution — You must give appropriate credit, provide a link to this repository, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use. For full license details, see:
+### Permission to Play
 
-https://creativecommons.org/licenses/by/4.0/
+You are granted a limited, non-exclusive, non-transferable, revocable license to access and play the game in your browser for personal, non-commercial entertainment only.
+
+### Restrictions (No Copy / No Redistribution)
+
+Without prior written permission, you may not copy, reproduce, redistribute, publish, upload to other sites, sell, rent, lease, sublicense, reverse engineer, decompile, scrape, or create derivative works from any part of the game or its assets, nor remove or alter any copyright or proprietary notices (except to the extent applicable law expressly permits).
+
+Examples of prohibited activity include:
+
+- Re-uploading the game to another website or marketplace
+- Cloning, re-skinning, or recreating the game for distribution
+- Extracting or reusing any music/audio, artwork, UI assets, or code
+
+### Attribution (Credits)
+
+If you receive written permission to use or reference any part of this project publicly, attribution must include:
+
+- Project name: Undersea Runner / Underwater Runner Game
+- A link to this repository (or the official live site)
+- A clear note indicating whether changes were made
+
+### Disclaimer
+
+The game is provided “as is” and “as available” without warranties of any kind. To the maximum extent permitted by law, the creator is not liable for any indirect, incidental, special, consequential, or punitive damages arising from or related to the use of the game.
+
+### Privacy
+
+High scores are stored locally in the player’s browser (localStorage). No accounts, logins, or personal data are intentionally collected or transmitted by the game.
