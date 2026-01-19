@@ -1,6 +1,6 @@
 # Underwater Runner Game - Vite React
 
-## Website Live at:
+## Website:
 
 ```
 https://underwatergame.netlify.app/
